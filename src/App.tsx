@@ -1,0 +1,112 @@
+import {
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import BuyerDashboard from "./pages/buyer/BuyerDashboard";
+import SellerDashboard from "./pages/seller/SellerDashboard";
+import LoginPage from "./pages/auth/Login";
+import RegisterPage from "./pages/auth/Register";
+import PageWrapper from "./components/PageWrapper";
+import BookForm from "./modals/AddBookModal";
+import { CartProvider } from "./context/CartContext";
+import CartPage from "./pages/buyer/AddToCart";
+import ProtectedRoute from "./components/ProtectedRoute";
+import BuyerProfile from "./pages/buyer/BuyerProfile";
+import theme from "./utils/theme";
+import { ThemeProvider } from "@mui/material/styles";
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes key={location.pathname} location={location}>
+        <Route
+          path="/signup"
+          element={
+            <PageWrapper>
+              <RegisterPage />
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <PageWrapper>
+              <LoginPage />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/buyer-dashboard"
+          element={
+            <ProtectedRoute
+              element={
+                <PageWrapper>
+                  <BuyerDashboard />
+                </PageWrapper>
+              }
+              requiredRole="buyer"
+            />
+          }
+        />
+        <Route
+          path="/seller-dashboard"
+          element={
+            <ProtectedRoute
+              element={
+                <PageWrapper>
+                  <SellerDashboard />
+                </PageWrapper>
+              }
+              requiredRole="seller"
+            />
+          }
+        />
+
+        <Route
+          path="/add-book"
+          element={
+            <PageWrapper>
+              <BookForm closeModal={() => {}} refreshBooks={() => {}} />
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/cart-item"
+          element={
+            <PageWrapper>
+              <CartPage />
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/buyer-profile"
+          element={
+            <PageWrapper>
+              <BuyerProfile />
+            </PageWrapper>
+          }
+        />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+const App = () => {
+  return (
+    <Router>
+      <ThemeProvider theme={theme}>
+        <CartProvider>
+          <AnimatedRoutes />
+        </CartProvider>
+      </ThemeProvider>
+    </Router>
+  );
+};
+
+export default App;

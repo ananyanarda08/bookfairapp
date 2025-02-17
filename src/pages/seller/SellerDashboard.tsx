@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from "react";
+import { Modal, Box } from "@mui/material";
+
+import BookForm from "../../modals/AddBookModal";
+import Layout from "../../layout/Layout";
+import { axiosInstance } from "../../api/AxiosInstance";
+import OrderSection from "./OrderList";
+import BooksSection from "./BookSection";
+import BookModal from "../../modals/ViewBookModal";
+import { Book, Order } from "../../utils/types";
+
+const SellerDashboard: React.FC = () => {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [open, setOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [viewModalOpen, setViewModalOpen] = useState<boolean>(false);
+  const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
+  const [selectedBook, setSelectedBook] = useState<any>(null);
+  useEffect(() => {
+    (async () => {
+      await fetchBooks();
+      await fetchOrders();
+      setIsLoading(false);
+    })();
+  }, []);
+
+  const fetchBooks = async () => {
+    await axiosInstance
+      .get("/books")
+      .then((res) => setBooks(res.data))
+      .catch((err) => console.error("Error fetching books:", err));
+  };
+
+  const fetchOrders = async () => {
+    await axiosInstance
+      .get("/orders")
+      .then((res) => setOrders(res.data))
+      .catch((err) => console.error("Error fetching orders:", err));
+  };
+
+  const handleViewOpen = (book: Book) => {
+    setSelectedBook(book);
+    setViewModalOpen(true);
+  };
+
+  const handleEditOpen = (book: Book) => {
+    setSelectedBook(book);
+    setEditModalOpen(true);
+  };
+
+  const handleClose = () => {
+    setViewModalOpen(false);
+    setEditModalOpen(false);
+    setSelectedBook(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await axiosInstance.delete(`/books/${id}`);
+      setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
+    } catch (error) {
+      console.error("Error deleting book:", error);
+    }
+  };
+  const handleCloseModal = () => {
+    setViewModalOpen(false);
+    setSelectedBook(null);
+  };
+
+  return (
+    <Layout>
+      <div className="pt-6 p-8 bg-white flex flex-col gap-4 mt-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
+          <BooksSection
+            books={books}
+            isLoading={isLoading}
+            setBooks={setBooks}
+            fetchBooks={fetchBooks}
+            handleViewOpen={handleViewOpen}
+            handleEditOpen={handleEditOpen}
+            handleDelete={handleDelete}
+            open={open}
+            setOpen={setOpen}
+          />
+
+          <div className="flex flex-col gap-6">
+            <OrderSection orders={orders} isLoading={isLoading} />
+          </div>
+        </div>
+
+        <Modal open={open} onClose={() => setOpen(false)}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 24,
+              p: 4,
+            }}
+          >
+            <h2 className="font-bold text-yellow-400">Add New Book</h2>
+            <BookForm
+              closeModal={() => setOpen(false)}
+              refreshBooks={fetchBooks}
+            />
+          </Box>
+        </Modal>
+
+        <BookModal
+          open={viewModalOpen}
+          onClose={handleCloseModal}
+          book={selectedBook}
+        />
+
+        <Modal open={editModalOpen} onClose={handleClose}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 24,
+              p: 4,
+            }}
+          >
+            <h2 className="font-bold text-yellow-400">Edit Book</h2>
+            {selectedBook && (
+              <BookForm
+                closeModal={handleClose}
+                refreshBooks={fetchBooks}
+                bookData={selectedBook}
+              />
+            )}
+          </Box>
+        </Modal>
+      </div>
+    </Layout>
+  );
+};
+
+export default SellerDashboard;
